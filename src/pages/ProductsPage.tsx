@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Search, ArrowUpDown, Filter, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ArrowUpDown, Filter, Package, ShoppingCart } from 'lucide-react';
+import BuyProductDialog from '@/components/BuyProductDialog';
 
 type SortKey = 'product_name' | 'quantity' | 'price' | 'category';
 type SortDir = 'asc' | 'desc';
@@ -25,6 +26,7 @@ export default function ProductsPage() {
   const [sortKey, setSortKey] = useState<SortKey>('product_name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [buyProduct, setBuyProduct] = useState<typeof products[0] | null>(null);
 
   const [form, setForm] = useState({
     product_name: '', sku: '', category: '', quantity: 0,
@@ -190,15 +192,16 @@ export default function ProductsPage() {
                 <TableHead className="text-right"><SortHeader label="Qty" field="quantity" /></TableHead>
                 <TableHead className="text-right"><SortHeader label="Price" field="price" /></TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-center">Buy</TableHead>
                 {isAdmin && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Loading...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground">Loading...</TableCell></TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
+                  <TableCell colSpan={9} className="text-center py-12">
                     <Package className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
                     <p className="text-muted-foreground">No products found</p>
                   </TableCell>
@@ -231,6 +234,18 @@ export default function ProductsPage() {
                         <Badge variant="secondary" className="bg-success/10 text-success border-0 text-xs">In Stock</Badge>
                       )}
                     </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 text-xs"
+                        onClick={() => setBuyProduct(p)}
+                        disabled={p.quantity === 0}
+                      >
+                        <ShoppingCart className="h-3.5 w-3.5" />
+                        Buy
+                      </Button>
+                    </TableCell>
                     {isAdmin && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -250,6 +265,12 @@ export default function ProductsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <BuyProductDialog
+        product={buyProduct}
+        open={!!buyProduct}
+        onOpenChange={(open) => { if (!open) setBuyProduct(null); }}
+      />
     </div>
   );
 }

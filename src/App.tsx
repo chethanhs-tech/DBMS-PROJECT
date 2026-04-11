@@ -8,6 +8,7 @@ import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ProductsPage from "@/pages/ProductsPage";
+import OrdersPage from "@/pages/OrdersPage";
 import TransactionsPage from "@/pages/TransactionsPage";
 import SuppliersPage from "@/pages/SuppliersPage";
 import AlertsPage from "@/pages/AlertsPage";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/auth" element={<AuthRoute />} />
             <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
+            <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
             <Route path="/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
             <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
             <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
