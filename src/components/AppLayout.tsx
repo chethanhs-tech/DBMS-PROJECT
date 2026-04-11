@@ -2,12 +2,13 @@ import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Package, ArrowLeftRight, Users, Bell, LogOut, Truck } from 'lucide-react';
+import { LayoutDashboard, Package, ArrowLeftRight, Users, Bell, LogOut, Truck, ShoppingBag } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/products', icon: Package, label: 'Products' },
+  { to: '/orders', icon: ShoppingBag, label: 'Orders' },
   { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
   { to: '/suppliers', icon: Truck, label: 'Suppliers' },
   { to: '/alerts', icon: Bell, label: 'Alerts' },
