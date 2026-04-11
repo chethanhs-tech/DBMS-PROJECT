@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import type { Order } from '@/hooks/useOrders';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { Download, X, IndianRupee, FileText } from 'lucide-react';
 
 interface InvoiceViewProps {
