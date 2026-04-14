@@ -8,7 +8,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useMemo } from 'react';
 
 const CHART_COLORS = [
-  'hsl(221, 83%, 53%)',
+  'hsl(142, 71%, 45%)',
   'hsl(142, 76%, 36%)',
   'hsl(38, 92%, 50%)',
   'hsl(0, 84%, 60%)',
