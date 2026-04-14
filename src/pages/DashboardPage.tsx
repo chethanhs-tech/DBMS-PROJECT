@@ -68,8 +68,8 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Overview of your inventory metrics</p>
+          <h1 className="text-2xl font-bold">GrozoSphere Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">Smart Groceries. Smarter Inventory.</p>
         </div>
         {activeAlertsCount > 0 && (
           <Badge variant="destructive" className="gap-1 animate-pulse">
@@ -121,12 +121,12 @@ export default function DashboardPage() {
                 <AreaChart data={salesByDay}>
                   <defs>
                     <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(142, 71%, 45%)" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="purchGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -140,8 +140,8 @@ export default function DashboardPage() {
                       fontSize: '0.875rem',
                     }}
                   />
-                  <Area type="monotone" dataKey="sales" stroke="hsl(142, 76%, 36%)" fill="url(#salesGrad)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="purchases" stroke="hsl(221, 83%, 53%)" fill="url(#purchGrad)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="sales" stroke="hsl(142, 71%, 45%)" fill="url(#salesGrad)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="purchases" stroke="hsl(38, 92%, 50%)" fill="url(#purchGrad)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
