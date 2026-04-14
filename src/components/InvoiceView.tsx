@@ -3,7 +3,7 @@ import type { Order } from '@/hooks/useOrders';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Download, X, IndianRupee, FileText } from 'lucide-react';
+import { Download, IndianRupee, FileText } from 'lucide-react';
 
 interface InvoiceViewProps {
   order: Order | null;
@@ -26,11 +26,11 @@ export default function InvoiceView({ order, open, onOpenChange }: InvoiceViewPr
     printWindow.document.write(`
       <html><head><title>Invoice ${order.invoice_number}</title>
       <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         body { padding: 40px; color: #1a1a1a; }
         .invoice { max-width: 600px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #e5e7eb; }
-        .brand { font-size: 24px; font-weight: 700; color: #2563eb; }
+        .brand { font-size: 24px; font-weight: 700; color: #22c55e; }
         .brand-sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
         .invoice-meta { text-align: right; font-size: 13px; }
         .invoice-meta strong { display: block; font-size: 16px; margin-bottom: 4px; }
@@ -42,7 +42,7 @@ export default function InvoiceView({ order, open, onOpenChange }: InvoiceViewPr
         .amount-col { text-align: right; }
         .totals { margin-top: 16px; }
         .total-row { display: flex; justify-content: space-between; padding: 6px 12px; font-size: 14px; }
-        .total-row.final { font-size: 18px; font-weight: 700; color: #2563eb; border-top: 2px solid #e5e7eb; padding-top: 12px; margin-top: 8px; }
+        .total-row.final { font-size: 18px; font-weight: 700; color: #22c55e; border-top: 2px solid #e5e7eb; padding-top: 12px; margin-top: 8px; }
         .footer { margin-top: 40px; padding-top: 24px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 12px; color: #9ca3af; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #dcfce7; color: #16a34a; }
         @media print { body { padding: 20px; } }
@@ -51,8 +51,8 @@ export default function InvoiceView({ order, open, onOpenChange }: InvoiceViewPr
         <div class="invoice">
           <div class="header">
             <div>
-              <div class="brand">Smart Inventory</div>
-              <div class="brand-sub">Inventory Management System</div>
+              <div class="brand">GrozoSphere</div>
+              <div class="brand-sub">Smart Groceries. Smarter Inventory.</div>
             </div>
             <div class="invoice-meta">
               <strong>${order.invoice_number}</strong>
@@ -85,8 +85,8 @@ export default function InvoiceView({ order, open, onOpenChange }: InvoiceViewPr
             <div class="total-row"><span>Status</span><span class="badge">Completed</span></div>
           </div>
           <div class="footer">
-            <p>Thank you for your purchase!</p>
-            <p style="margin-top:4px">Smart Inventory Management System</p>
+            <p>Thank you for shopping with GrozoSphere!</p>
+            <p style="margin-top:4px">Smart Groceries. Smarter Inventory.</p>
           </div>
         </div>
         <script>window.print();window.onafterprint=()=>window.close();</script>
@@ -108,8 +108,8 @@ export default function InvoiceView({ order, open, onOpenChange }: InvoiceViewPr
         <div ref={printRef} className="space-y-4">
           <div className="flex justify-between items-start p-4 rounded-xl bg-primary/5 border border-primary/10">
             <div>
-              <p className="font-bold text-lg text-primary">Smart Inventory</p>
-              <p className="text-xs text-muted-foreground">Inventory Management System</p>
+              <p className="font-bold text-lg text-primary">GrozoSphere</p>
+              <p className="text-xs text-muted-foreground">Smart Groceries. Smarter Inventory.</p>
             </div>
             <div className="text-right">
               <p className="font-mono text-sm font-bold">{order.invoice_number}</p>

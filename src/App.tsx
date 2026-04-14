@@ -4,9 +4,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
 import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
 import DashboardPage from "@/pages/DashboardPage";
+import ShopPage from "@/pages/ShopPage";
+import CartPage from "@/pages/CartPage";
 import ProductsPage from "@/pages/ProductsPage";
 import OrdersPage from "@/pages/OrdersPage";
 import TransactionsPage from "@/pages/TransactionsPage";
@@ -37,16 +40,20 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<AuthRoute />} />
-            <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-            <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
-            <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-            <Route path="/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
-            <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
-            <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <CartProvider>
+            <Routes>
+              <Route path="/auth" element={<AuthRoute />} />
+              <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
+              <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+              <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
+              <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+              <Route path="/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
+              <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
+              <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </CartProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

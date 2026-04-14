@@ -1,13 +1,17 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Package, ArrowLeftRight, Users, Bell, LogOut, Truck, ShoppingBag } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { LayoutDashboard, Package, ArrowLeftRight, Users, Bell, LogOut, Truck, ShoppingBag, ShoppingCart, Store } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/products', icon: Package, label: 'Products' },
+  { to: '/shop', icon: Store, label: 'Shop' },
+  { to: '/cart', icon: ShoppingCart, label: 'Cart' },
+  { to: '/products', icon: Package, label: 'Inventory' },
   { to: '/orders', icon: ShoppingBag, label: 'Orders' },
   { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
   { to: '/suppliers', icon: Truck, label: 'Suppliers' },
@@ -16,6 +20,7 @@ const navItems = [
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { profile, isAdmin, signOut } = useAuth();
+  const { totalItems } = useCart();
   const location = useLocation();
 
   return (
@@ -25,10 +30,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="p-6">
           <h1 className="text-lg font-bold flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-sidebar-primary/20">
-              <Package className="h-5 w-5 text-sidebar-primary" />
+              <Store className="h-5 w-5 text-sidebar-primary" />
             </div>
-            Smart Inventory
+            GrozoSphere
           </h1>
+          <p className="text-xs text-sidebar-foreground/50 mt-1">Smart Groceries. Smarter Inventory.</p>
         </div>
         <nav className="flex-1 px-3 space-y-1">
           {navItems.map(item => {
@@ -45,6 +51,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               >
                 <item.icon className={`h-4 w-4 transition-transform duration-200 ${active ? '' : 'group-hover:scale-110'}`} />
                 {item.label}
+                {item.to === '/cart' && totalItems > 0 && (
+                  <Badge className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs bg-primary text-primary-foreground p-0 px-1.5">
+                    {totalItems}
+                  </Badge>
+                )}
                 {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary" />}
               </Link>
             );
@@ -71,7 +82,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <main className="flex-1 overflow-auto bg-background">
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 px-6 py-3 flex items-center justify-between">
           <div />
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <Link to="/cart" className="relative">
+              <ShoppingCart className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 flex items-center justify-center text-[10px] font-bold bg-primary text-primary-foreground rounded-full px-1">
+                  {totalItems}
+                </span>
+              )}
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
         <div className="p-6 max-w-7xl mx-auto animate-fade-in">
           {children}
