@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Package } from 'lucide-react';
+import { Store } from 'lucide-react';
 
 export default function AuthPage() {
   const { signIn, signUp } = useAuth();
@@ -28,7 +28,6 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-bl from-primary/5 via-transparent to-transparent rounded-full" />
         <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-primary/3 via-transparent to-transparent rounded-full" />
@@ -38,13 +37,14 @@ export default function AuthPage() {
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
             <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 shadow-sm">
-              <Package className="h-8 w-8 text-primary" />
+              <Store className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Smart Inventory</CardTitle>
+          <CardTitle className="text-2xl font-bold">GrozoSphere</CardTitle>
           <CardDescription className="text-base">
             {isLogin ? 'Welcome back! Sign in to continue' : 'Create your account to get started'}
           </CardDescription>
+          <p className="text-xs text-muted-foreground mt-1">Smart Groceries. Smarter Inventory.</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -56,7 +56,7 @@ export default function AuthPage() {
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" required className="h-11" />
+              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com" required className="h-11" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
