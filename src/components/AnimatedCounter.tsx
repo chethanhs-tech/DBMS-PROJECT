@@ -7,11 +7,12 @@ interface AnimatedCounterProps {
   suffix?: string;
 }
 
-export default function AnimatedCounter({ value, duration = 800, prefix = '', suffix = '' }: AnimatedCounterProps) {
+export default function AnimatedCounter({ value: rawValue, duration = 800, prefix = '', suffix = '' }: AnimatedCounterProps) {
+  const value = typeof rawValue === 'number' ? rawValue : 0;
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
-    if (value === 0) { setDisplay(0); return; }
+    if (!Number.isFinite(value) || value === 0) { setDisplay(0); return; }
     const start = 0;
     const startTime = performance.now();
 
@@ -26,5 +27,6 @@ export default function AnimatedCounter({ value, duration = 800, prefix = '', su
     requestAnimationFrame(tick);
   }, [value, duration]);
 
-  return <span>{prefix}{display.toLocaleString()}{suffix}</span>;
+  const displayValue = Number.isFinite(display) ? display : 0;
+  return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
 }

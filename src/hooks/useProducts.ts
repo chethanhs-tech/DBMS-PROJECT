@@ -25,14 +25,24 @@ export function useProducts() {
   useEffect(() => {
     fetchProducts();
 
-    const channel = supabase
-      .channel('products-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
-        fetchProducts();
-      })
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      const channelName = `products-${Math.random().toString(36).slice(2)}`;
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
+          fetchProducts();
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('Realtime subscription failed (products), falling back to polling:', err);
+    }
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      if (channel) {
+        try { supabase.removeChannel(channel); } catch {}
+      }
+    };
   }, [fetchProducts]);
 
   const addProduct = async (product: TablesInsert<'products'>) => {

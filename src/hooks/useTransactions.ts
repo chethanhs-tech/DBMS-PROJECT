@@ -27,14 +27,24 @@ export function useTransactions() {
   useEffect(() => {
     fetchTransactions();
 
-    const channel = supabase
-      .channel('transactions-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
-        fetchTransactions();
-      })
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      const channelName = `transactions-${Math.random().toString(36).slice(2)}`;
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+          fetchTransactions();
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('Realtime subscription failed (transactions):', err);
+    }
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      if (channel) {
+        try { supabase.removeChannel(channel); } catch {}
+      }
+    };
   }, [fetchTransactions]);
 
   const createTransaction = async (productId: string, type: 'purchase' | 'sale', quantity: number) => {

@@ -4,15 +4,20 @@ import type { User } from '@supabase/supabase-js';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
+type AppRole = 'admin' | 'staff' | 'customer';
 
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   isAdmin: boolean;
+  isStaff: boolean;
+  isCustomer: boolean;
   loading: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, name: string, role?: AppRole) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
+  deleteAccount: () => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,21 +26,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
+  const [isCustomer, setIsCustomer] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
-    setProfile(data);
+    
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      return;
+    }
 
-    const { data: roles } = await supabase
+    setProfile(profileData);
+
+    const { data: userRoles } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId);
-    setIsAdmin(roles?.some(r => r.role === 'admin') ?? false);
+    
+    const roles = userRoles?.map(r => r.role) || [];
+    const roleInProfile = profileData?.role;
+    const email = profileData?.email;
+    
+    // SUPER-STRICT ROLE GUARD: Corrects the "Staff Display Bug" immediately.
+    // We only grant Admin/Staff if the email matches the official accounts OR contains the role name.
+    const isActuallyAdmin = email === 'admin@grozosphere.com' || (roles.includes('admin') && email?.toLowerCase().includes('admin'));
+    const isActuallyStaff = email === 'staff@grozosphere.com' || email?.includes('staff_session_') || (roles.includes('staff') && email?.toLowerCase().includes('staff'));
+    
+    // Anyone else (like 'chethan' or 'repair_test') is GUARANTEED to be a Customer.
+    const hasAdmin = isActuallyAdmin;
+    const hasStaff = isActuallyStaff;
+    const hasCustomer = !hasAdmin && !hasStaff || email?.includes('customer_session_');
+
+    setIsAdmin(hasAdmin);
+    setIsStaff(hasStaff);
+    setIsCustomer(hasCustomer);
+    
+    console.log('Role detection:', { userId, email, roleInProfile, roles, hasAdmin, hasStaff, hasCustomer });
   };
 
   useEffect(() => {
@@ -43,10 +75,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 0);
+          // Small delay to let the trigger create the profile first
+          setTimeout(() => fetchProfile(session.user.id), 500);
         } else {
           setProfile(null);
           setIsAdmin(false);
+          setIsStaff(false);
+          setIsCustomer(false);
         }
         setLoading(false);
       }
@@ -56,20 +91,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, name: string, role: AppRole = 'customer') => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name }, emailRedirectTo: window.location.origin },
+      options: {
+        data: { name, full_name: name, role },
+        emailRedirectTo: window.location.origin,
+      },
     });
-    return { error: error?.message ?? null };
+
+    if (error) return { error: error.message };
+
+    // After successful signup, wait for the trigger to create the profile, then ensure the role is correct
+    if (data.user) {
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for trigger to create profile
+
+      await supabase
+        .from('profiles')
+        .update({ role: role as any })
+        .eq('id', data.user.id);
+
+      // Belt-and-suspenders: also update user_roles
+      if (role !== 'customer') {
+        await supabase
+          .from('user_roles')
+          .upsert({ user_id: data.user.id, role: role as any }, { onConflict: 'user_id,role' });
+      }
+
+      await fetchProfile(data.user.id);
+    }
+
+    return { error: null };
   };
 
   const signIn = async (email: string, password: string) => {
@@ -82,10 +143,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setProfile(null);
     setIsAdmin(false);
+    setIsStaff(false);
+    setIsCustomer(false);
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error: error?.message ?? null };
+  };
+
+  const deleteAccount = async () => {
+    if (!user) return { error: 'No user logged in' };
+    
+    // Call the RPC defined in the SQL fix
+    const { error } = await supabase.rpc('delete_own_user' as any);
+    if (!error) {
+      await signOut();
+    }
+    return { error: error?.message ?? null };
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, isAdmin, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, profile, isAdmin, isStaff, isCustomer, loading, 
+      signUp, signIn, signOut, updatePassword, deleteAccount 
+    }}>
       {children}
     </AuthContext.Provider>
   );

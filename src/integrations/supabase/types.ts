@@ -48,7 +48,9 @@ export type Database = {
       }
       orders: {
         Row: {
+          address_id: string | null
           created_at: string
+          estimated_delivery_time: string | null
           gst_amount: number
           id: string
           invoice_number: string
@@ -59,10 +61,13 @@ export type Database = {
           status: string
           total_price: number
           unit_price: number
+          upi_id: string | null
           user_id: string
         }
         Insert: {
+          address_id?: string | null
           created_at?: string
+          estimated_delivery_time?: string | null
           gst_amount?: number
           id?: string
           invoice_number: string
@@ -73,10 +78,13 @@ export type Database = {
           status?: string
           total_price: number
           unit_price: number
+          upi_id?: string | null
           user_id: string
         }
         Update: {
+          address_id?: string | null
           created_at?: string
+          estimated_delivery_time?: string | null
           gst_amount?: number
           id?: string
           invoice_number?: string
@@ -87,9 +95,17 @@ export type Database = {
           status?: string
           total_price?: number
           unit_price?: number
+          upi_id?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_address_id_fkey"
+            columns: ["address_id"]
+            isOneToOne: false
+            referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_product_id_fkey"
             columns: ["product_id"]
@@ -229,6 +245,56 @@ export type Database = {
           },
         ]
       }
+      addresses: {
+        Row: {
+          city: string
+          created_at: string
+          full_name: string
+          house_no: string
+          id: string
+          is_default: boolean | null
+          landmark: string | null
+          phone_number: string
+          pincode: string
+          street: string
+          user_id: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          full_name: string
+          house_no: string
+          id?: string
+          is_default?: boolean | null
+          landmark?: string | null
+          phone_number: string
+          pincode: string
+          street: string
+          user_id: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          full_name?: string
+          house_no?: string
+          id?: string
+          is_default?: boolean | null
+          landmark?: string | null
+          phone_number?: string
+          pincode?: string
+          street?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -242,7 +308,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -261,7 +327,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff"
+      app_role: "admin" | "staff" | "customer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -389,7 +455,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff"],
+      app_role: ["admin", "staff", "customer"],
     },
   },
 } as const

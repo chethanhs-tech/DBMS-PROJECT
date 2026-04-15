@@ -25,14 +25,24 @@ export function useAlerts() {
   useEffect(() => {
     fetchAlerts();
 
-    const channel = supabase
-      .channel('alerts-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => {
-        fetchAlerts();
-      })
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      const channelName = `alerts-${Math.random().toString(36).slice(2)}`;
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => {
+          fetchAlerts();
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('Realtime subscription failed (alerts):', err);
+    }
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      if (channel) {
+        try { supabase.removeChannel(channel); } catch {}
+      }
+    };
   }, [fetchAlerts]);
 
   const resolveAlert = async (id: string) => {

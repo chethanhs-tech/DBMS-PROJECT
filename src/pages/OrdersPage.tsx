@@ -102,7 +102,7 @@ export default function OrdersPage() {
                     <TableCell className="font-medium">{o.product_name}</TableCell>
                     <TableCell className="text-center tabular-nums">{o.quantity}</TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
-                      <span className="flex items-center justify-end"><IndianRupee className="h-3 w-3" />{o.total_price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      <span className="flex items-center justify-end"><IndianRupee className="h-3 w-3" />{(o.total_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     </TableCell>
                     <TableCell><Badge variant="secondary" className="text-xs capitalize">{o.payment_method}</Badge></TableCell>
                     <TableCell className="text-sm text-muted-foreground">

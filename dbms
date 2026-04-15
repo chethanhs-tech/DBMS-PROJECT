@@ -1,0 +1,19 @@
+# List Network Requests
+
+| reqid | method | url | status |
+|---|---|---|---|
+| 177 | GET | https://yclkjjdsjryteqjgltoc.supabase.co/rest/v1/addresses?select=*&user_id=eq.2d79715f-df28-4d0d-b902-f80bc5145675&order=is_default.desc%2Ccreated_at.desc | failed - 404 |
+| 178 | GET | https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300&h=300&fit=crop | success - 200 |
+| 179 | GET | https://img.icons8.com/color/48/visa.png | success - 200 |
+| 180 | GET | https://img.icons8.com/color/48/mastercard.png | success - 200 |
+| 181 | GET | https://img.icons8.com/color/48/upi.png | failed - net::ERR_BLOCKED_BY_ORB |
+| 182 | GET | https://yclkjjdsjryteqjgltoc.supabase.co/rest/v1/addresses?select=*&user_id=eq.2d79715f-df28-4d0d-b902-f80bc5145675&order=is_default.desc%2Ccreated_at.desc | failed - 404 |
+| 183 | GET | https://img.icons8.com/color/48/phone-pe.png | success - 200 |
+| 184 | GET | https://img.icons8.com/color/48/google-pay.png | success - 200 |
+| 185 | POST | https://yclkjjdsjryteqjgltoc.supabase.co/rest/v1/orders | failed - 400 |
+| 186 | OPTIONS | https://yclkjjdsjryteqjgltoc.supabase.co/rest/v1/orders | success - 200 |
+| 187 | POST | https://yclkjjdsjryteqjgltoc.supabase.co/rest/v1/orders | success - 201 |
+| 188 | POST | https://yclkjjdsjryteqjgltoc.supabase.co/rest/v1/transactions | success - 201 |
+| 189 | OPTIONS | https://yclkjjdsjryteqjgltoc.supabase.co/rest/v1/transactions | success - 200 |
+| 190 | PATCH | https://yclkjjdsjryteqjgltoc.supabase.co/rest/v1/products?id=eq.cb9bc9e0-2938-4483-9bbd-2c9dba342399 | success - 204 |
+| 191 | OPTIONS | https://yclkjjdsjryteqjgltoc.supabase.co/rest/v1/products?id=eq.cb9bc9e0-2938-4483-9bbd-2c9dba342399 | success - 200 |

@@ -1,62 +1,119 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import type { Tables } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
 type Product = Tables<'products'>;
 
 export interface CartItem {
-  product: Product;
+  product: Product & { display_name?: string };
   quantity: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product, qty?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, qty: number) => void;
+  addToCart: (product: Product & { display_name?: string }, qty?: number) => void;
+  removeFromCart: (productId: string, displayName?: string) => void;
+  updateQuantity: (productId: string, qty: number, displayName?: string) => void;
   clearCart: () => void;
+  applyCoupon: (code: string) => void;
+  removeCoupon: () => void;
   totalItems: number;
   totalPrice: number;
+  discount: number;
+  appliedCoupon: string | null;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const SAVED_COUPONS = {
+  'GROZO20': { type: 'percent', value: 20 },
+  'SAVE50': { type: 'flat', value: 50 },
+  'FIRSTORDER': { type: 'percent', value: 10 },
+} as const;
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [discount, setDiscount] = useState(0);
 
-  const addToCart = useCallback((product: Product, qty = 1) => {
+  const getItemKey = (p: Product & { display_name?: string }) => `${p.id}-${p.display_name || ''}`;
+
+  const totalPrice = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
+
+  const calculateDiscount = useCallback((code: string, subtotal: number) => {
+    const coupon = SAVED_COUPONS[code as keyof typeof SAVED_COUPONS];
+    if (!coupon) return 0;
+    if (coupon.type === 'percent') return (subtotal * coupon.value) / 100;
+    return Math.min(coupon.value, subtotal);
+  }, []);
+
+  const applyCoupon = useCallback((code: string) => {
+    const ucCode = code.toUpperCase();
+    if (SAVED_COUPONS[ucCode as keyof typeof SAVED_COUPONS]) {
+      setAppliedCoupon(ucCode);
+      const d = calculateDiscount(ucCode, totalPrice);
+      setDiscount(d);
+      toast.success(`Coupon ${ucCode} applied! Saved ₹${d.toFixed(0)}`);
+    } else {
+      toast.error('Invalid coupon code');
+    }
+  }, [totalPrice, calculateDiscount]);
+
+  const removeCoupon = useCallback(() => {
+    setAppliedCoupon(null);
+    setDiscount(0);
+    toast.info('Coupon removed');
+  }, []);
+
+  const addToCart = useCallback((product: Product & { display_name?: string }, qty = 1) => {
     setItems(prev => {
-      const existing = prev.find(i => i.product.id === product.id);
+      const key = getItemKey(product);
+      const existing = prev.find(i => getItemKey(i.product) === key);
       if (existing) {
         const newQty = Math.min(existing.quantity + qty, product.quantity);
-        return prev.map(i => i.product.id === product.id ? { ...i, quantity: newQty } : i);
+        return prev.map(i => getItemKey(i.product) === key ? { ...i, quantity: newQty } : i);
       }
       return [...prev, { product, quantity: Math.min(qty, product.quantity) }];
     });
-    toast.success(`${product.product_name} added to cart`);
+    toast.success(`${product.display_name || product.product_name} added to cart`);
   }, []);
 
-  const removeFromCart = useCallback((productId: string) => {
-    setItems(prev => prev.filter(i => i.product.id !== productId));
+  const removeFromCart = useCallback((productId: string, displayName?: string) => {
+    const key = `${productId}-${displayName || ''}`;
+    setItems(prev => prev.filter(i => getItemKey(i.product) !== key));
   }, []);
 
-  const updateQuantity = useCallback((productId: string, qty: number) => {
+  const updateQuantity = useCallback((productId: string, qty: number, displayName?: string) => {
+    const key = `${productId}-${displayName || ''}`;
     if (qty <= 0) {
-      setItems(prev => prev.filter(i => i.product.id !== productId));
+      setItems(prev => prev.filter(i => getItemKey(i.product) !== key));
       return;
     }
     setItems(prev => prev.map(i =>
-      i.product.id === productId ? { ...i, quantity: Math.min(qty, i.product.quantity) } : i
+      getItemKey(i.product) === key ? { ...i, quantity: Math.min(qty, i.product.quantity) } : i
     ));
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    setItems([]);
+    setAppliedCoupon(null);
+    setDiscount(0);
+  }, []);
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0);
-  const totalPrice = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
+
+  // Re-calculate discount if total price changes
+  useEffect(() => {
+    if (appliedCoupon) {
+      setDiscount(calculateDiscount(appliedCoupon, totalPrice));
+    }
+  }, [totalPrice, appliedCoupon, calculateDiscount]);
 
   return (
-    <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice }}>
+    <CartContext.Provider value={{ 
+      items, addToCart, removeFromCart, updateQuantity, clearCart, 
+      applyCoupon, removeCoupon, totalItems, totalPrice, discount, appliedCoupon 
+    }}>
       {children}
     </CartContext.Provider>
   );
