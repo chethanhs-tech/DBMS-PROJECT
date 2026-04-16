@@ -16,7 +16,7 @@ export default function InvoiceView({ order, open, onOpenChange }: InvoiceViewPr
 
   if (!order) return null;
 
-  const subtotal = order.total_price - order.gst_amount;
+  const subtotal = order.total_amount - order.gst_amount;
 
   const handleDownload = () => {
     const el = printRef.current;
@@ -77,7 +77,7 @@ export default function InvoiceView({ order, open, onOpenChange }: InvoiceViewPr
           <div class="totals">
             <div class="total-row"><span>Subtotal</span><span>₹${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
             <div class="total-row"><span>GST (18%)</span><span>₹${order.gst_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-            <div class="total-row final"><span>Total</span><span>₹${order.total_price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+            <div class="total-row final"><span>Total</span><span>₹${order.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
           </div>
           <div class="section" style="margin-top:24px">
             <div class="section-title">Payment Info</div>
@@ -145,7 +145,7 @@ export default function InvoiceView({ order, open, onOpenChange }: InvoiceViewPr
             </div>
             <div className="border-t pt-2 flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span className="flex items-center text-primary"><IndianRupee className="h-4 w-4" />{order.total_price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              <span className="flex items-center text-primary"><IndianRupee className="h-4 w-4" />{order.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
 

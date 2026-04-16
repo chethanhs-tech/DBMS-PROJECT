@@ -9,7 +9,7 @@ import { Search, FileText, IndianRupee, ShoppingBag, ArrowUpDown } from 'lucide-
 import { Skeleton } from '@/components/ui/skeleton';
 import InvoiceView from '@/components/InvoiceView';
 
-type SortKey = 'created_at' | 'total_price' | 'quantity';
+type SortKey = 'created_at' | 'total_amount' | 'quantity';
 type SortDir = 'asc' | 'desc';
 
 export default function OrdersPage() {
@@ -78,7 +78,7 @@ export default function OrdersPage() {
                 <TableHead>Invoice</TableHead>
                 <TableHead>Product</TableHead>
                 <TableHead className="text-center"><SortHeader label="Qty" field="quantity" /></TableHead>
-                <TableHead className="text-right"><SortHeader label="Total" field="total_price" /></TableHead>
+                <TableHead className="text-right"><SortHeader label="Total" field="total_amount" /></TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead><SortHeader label="Date" field="created_at" /></TableHead>
                 <TableHead>Status</TableHead>
@@ -102,7 +102,7 @@ export default function OrdersPage() {
                     <TableCell className="font-medium">{o.product_name}</TableCell>
                     <TableCell className="text-center tabular-nums">{o.quantity}</TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
-                      <span className="flex items-center justify-end"><IndianRupee className="h-3 w-3" />{(o.total_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      <span className="flex items-center justify-end"><IndianRupee className="h-3 w-3" />{(o.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     </TableCell>
                     <TableCell><Badge variant="secondary" className="text-xs capitalize">{o.payment_method}</Badge></TableCell>
                     <TableCell className="text-sm text-muted-foreground">

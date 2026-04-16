@@ -9,7 +9,7 @@ export interface Order {
   product_name: string;
   quantity: number;
   unit_price: number;
-  total_price: number;
+  total_amount: number;
   gst_amount: number;
   payment_method: string;
   status: string;
