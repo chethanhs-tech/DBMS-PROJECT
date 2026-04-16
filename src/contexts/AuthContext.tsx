@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
+    // 1. Fetch Profile Data
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -44,30 +45,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setProfile(profileData);
 
+    // 2. Fetch Roles from user_roles table
     const { data: userRoles } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId);
     
     const roles = userRoles?.map(r => r.role) || [];
-    const roleInProfile = profileData?.role;
-    const email = profileData?.email;
     
-    // SUPER-STRICT ROLE GUARD: Corrects the "Staff Display Bug" immediately.
-    // We only grant Admin/Staff if the email matches the official accounts OR contains the role name.
-    const isActuallyAdmin = email === 'admin@grozosphere.com' || (roles.includes('admin') && email?.toLowerCase().includes('admin'));
-    const isActuallyStaff = email === 'staff@grozosphere.com' || email?.includes('staff_session_') || (roles.includes('staff') && email?.toLowerCase().includes('staff'));
-    
-    // Anyone else (like 'chethan' or 'repair_test') is GUARANTEED to be a Customer.
-    const hasAdmin = isActuallyAdmin;
-    const hasStaff = isActuallyStaff;
-    const hasCustomer = !hasAdmin && !hasStaff || email?.includes('customer_session_');
+    // Set boolean flags based on presence of roles in the database
+    const hasAdmin = roles.includes('admin');
+    const hasStaff = roles.includes('staff');
+    const hasCustomer = roles.includes('customer') || (!hasAdmin && !hasStaff);
 
     setIsAdmin(hasAdmin);
     setIsStaff(hasStaff);
     setIsCustomer(hasCustomer);
     
-    console.log('Role detection:', { userId, email, roleInProfile, roles, hasAdmin, hasStaff, hasCustomer });
+    console.log('Role detection synced with database:', { userId, roles, hasAdmin, hasStaff, hasCustomer });
   };
 
   useEffect(() => {

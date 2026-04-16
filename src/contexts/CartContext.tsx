@@ -5,7 +5,10 @@ import { toast } from 'sonner';
 type Product = Tables<'products'>;
 
 export interface CartItem {
-  product: Product & { display_name?: string };
+  product: Product & { 
+    display_name?: string;
+    selected_variation?: string;
+  };
   quantity: number;
 }
 

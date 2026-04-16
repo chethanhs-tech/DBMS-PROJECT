@@ -19,9 +19,6 @@ const ROLE_CONFIG = {
     border: 'border-green-500/30',
     desc: 'Browse, shop & track orders',
     canSignUp: true,
-    demoEmail: 'customer@grozosphere.com',
-    demoPass: 'customer@123',
-    demoName: 'Demo Customer',
   },
   staff: {
     label: 'Staff',
@@ -32,9 +29,6 @@ const ROLE_CONFIG = {
     border: 'border-blue-500/30',
     desc: 'Manage inventory & restock',
     canSignUp: false,
-    demoEmail: 'staff@grozosphere.com',
-    demoPass: 'staff@123',
-    demoName: 'Staff User',
   },
   admin: {
     label: 'Admin',
@@ -45,9 +39,6 @@ const ROLE_CONFIG = {
     border: 'border-purple-500/30',
     desc: 'Full system control & users',
     canSignUp: false,
-    demoEmail: 'admin@grozosphere.com',
-    demoPass: 'admin@123',
-    demoName: 'Admin User',
   },
 };
 
@@ -61,8 +52,6 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const config = ROLE_CONFIG[selectedRole];
 
@@ -78,56 +67,6 @@ export default function AuthPage() {
       if (result.error) setError(result.error);
     }
     setLoading(false);
-  };
-
-  // Robust Demo Login: Auto-create if missing, then Sign In
-  // 🌈 ULTIMATE SELF-HEALING LOGIN: Guarantees access by creating a unique session account if deadlocked.
-  const handleDemoLogin = async () => {
-    setError('');
-    setDemoLoading(true);
-    
-    try {
-      // PHASE 1: Try Primary Demo Account
-      const signInResult = await signIn(config.demoEmail, config.demoPass);
-      
-      if (signInResult.error) {
-        // PHASE 2: Try Creating Primary Demo (if missing)
-        const signUpResult = await signUp(config.demoEmail, config.demoPass, config.demoName, selectedRole);
-        
-        if (signUpResult.error) {
-          // PHASE 3: AUTHENTICATION DEADLOCK RESCUE (Password mismatched or rate-limited)
-          // We generate a unique Session ID to bypass existing email/password conflicts.
-          const sessionId = Math.random().toString(36).substring(2, 7);
-          const sessionEmail = `${selectedRole}_session_${sessionId}@grozosphere-demo.com`;
-          
-          console.log(`[Demo Login] Deadlock detected. Switching to session account: ${sessionEmail}`);
-          
-          const sessionSignUp = await signUp(sessionEmail, config.demoPass, `${config.demoName} (Session)`, selectedRole);
-          if (sessionSignUp.error) {
-            setError("Demo restricted by Supabase limits. Please try again in 60s.");
-          } else {
-            await signIn(sessionEmail, config.demoPass);
-          }
-        } else {
-          // Success sign up, now sign in
-          await signIn(config.demoEmail, config.demoPass);
-        }
-      }
-    } catch (err) {
-      console.error('Demo login crash:', err);
-      setError('An unexpected error occurred. Please refresh.');
-    }
-    
-    setDemoLoading(false);
-  };
-
-  const handleCopyAndFill = (field: 'email' | 'password') => {
-    const value = field === 'email' ? config.demoEmail : config.demoPass;
-    navigator.clipboard.writeText(value).catch(() => {});
-    if (field === 'email') setEmail(value);
-    if (field === 'password') setPassword(value);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 1500);
   };
 
   const handleRoleSelect = (role: RoleTab) => {
@@ -201,58 +140,6 @@ export default function AuthPage() {
           </CardHeader>
           <CardContent className="space-y-5 pb-6">
 
-            {/* Credentials Guidance / Fast Access */}
-            <div className={`p-4 rounded-xl border ${config.border} ${config.bg} space-y-3`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Lock className={`h-4 w-4 ${config.text}`} />
-                  <p className={`text-xs font-bold ${config.text}`}>
-                    {config.label} Access
-                  </p>
-                </div>
-                <Badge variant="outline" className={`text-[9px] font-bold uppercase ${config.bg} ${config.text} border-${config.text}/30`}>
-                  {config.canSignUp ? 'Universal' : 'Restricted'}
-                </Badge>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between bg-background/60 rounded-lg px-3 py-2">
-                  <div className="overflow-hidden">
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase">Email</p>
-                    <p className="text-xs font-mono font-bold truncate">{config.demoEmail}</p>
-                  </div>
-                  <button onClick={() => handleCopyAndFill('email')} className={`p-1.5 rounded-lg hover:bg-secondary transition-colors ${config.text} flex-shrink-0 ml-2`}>
-                    {copiedField === 'email' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between bg-background/60 rounded-lg px-3 py-2">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase">Password</p>
-                    <p className="text-xs font-mono font-bold">{config.demoPass}</p>
-                  </div>
-                  <button onClick={() => handleCopyAndFill('password')} className={`p-1.5 rounded-lg hover:bg-secondary transition-colors ${config.text} flex-shrink-0 ml-2`}>
-                    {copiedField === 'password' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
-              </div>
-              
-              <Button
-                type="button"
-                className={`w-full h-9 rounded-lg font-black text-xs gap-2 bg-gradient-to-r ${config.color} hover:opacity-90 transition-opacity shadow-sm`}
-                onClick={handleDemoLogin}
-                disabled={loading || demoLoading}
-              >
-                {demoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                1-Click Demo Login
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-border/50" />
-              <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">or use your own</span>
-              <div className="flex-1 h-px bg-border/50" />
-            </div>
-
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
@@ -299,8 +186,8 @@ export default function AuthPage() {
                   <p className="text-sm text-destructive font-medium">{error}</p>
                 </div>
               )}
-              <Button type="submit" className={`w-full h-11 font-black rounded-xl shadow-lg bg-gradient-to-r ${config.color} hover:opacity-90 transition-opacity gap-2`} disabled={loading || demoLoading}>
-                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Please wait...</> : <>Sign In <ArrowRight className="h-4 w-4" /></>}
+              <Button type="submit" className={`w-full h-11 font-black rounded-xl shadow-lg bg-gradient-to-r ${config.color} hover:opacity-90 transition-opacity gap-2`} disabled={loading}>
+                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Please wait...</> : <>{isLogin ? 'Sign In' : 'Sign Up'} <ArrowRight className="h-4 w-4" /></>}
               </Button>
             </form>
 

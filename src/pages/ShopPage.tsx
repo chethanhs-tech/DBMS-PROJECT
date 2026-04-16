@@ -220,16 +220,49 @@ export default function ShopPage() {
 }
 
 function ProductCard({ product, onAdd }: { product: any, onAdd: any }) {
+  const variations = useMemo(() => {
+    if (!product.variations) return [];
+    try {
+      return typeof product.variations === 'string' 
+        ? JSON.parse(product.variations) 
+        : product.variations;
+    } catch {
+      return [];
+    }
+  }, [product.variations]);
+
+  const [selectedVarLabel, setSelectedVarLabel] = useState(variations[0]?.label || null);
+
+  const currentPrice = useMemo(() => {
+    if (!selectedVarLabel) return product.price;
+    const v = variations.find((v: any) => v.label === selectedVarLabel);
+    return v ? v.price : product.price;
+  }, [selectedVarLabel, variations, product.price]);
+
+  const handleAdd = () => {
+    const displayName = selectedVarLabel 
+      ? `${product.product_name} (${selectedVarLabel})`
+      : product.product_name;
+    
+    onAdd({ 
+      ...product, 
+      price: currentPrice,
+      display_name: displayName,
+      selected_variation: selectedVarLabel
+    });
+  };
+
   return (
-    <Card className="group relative bg-card border-border/50 hover:border-primary/20 shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 rounded-[2.5rem] overflow-hidden">
-      <div className="aspect-square bg-muted/20 relative overflow-hidden">
-        {product.image_url ? (
-          <img src={product.image_url} alt={product.product_name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center">
-            <Package className="h-20 w-20 text-muted-foreground/10" />
-          </div>
-        )}
+    <Card className="group relative bg-card border-border/50 hover:border-primary/20 shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 rounded-[2.5rem] overflow-hidden flex flex-col h-full">
+      <div className="aspect-square bg-muted/20 relative overflow-hidden flex-shrink-0">
+        <img 
+          src={product.image_url || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80'} 
+          alt={product.product_name} 
+          className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80';
+          }}
+        />
         
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
@@ -251,32 +284,54 @@ function ProductCard({ product, onAdd }: { product: any, onAdd: any }) {
         
         {/* Quick View Button */}
         <div className="absolute inset-x-0 bottom-4 px-4 translate-y-20 group-hover:translate-y-0 transition-transform duration-500 z-10 hidden md:block">
-           <Button className="w-full h-12 rounded-2xl bg-white text-black hover:bg-white/90 font-black shadow-2xl" onClick={() => onAdd({ ...product, display_name: product.product_name })}>
+           <Button className="w-full h-12 rounded-2xl bg-white text-black hover:bg-white/90 font-black shadow-2xl" onClick={handleAdd}>
              <Plus className="h-5 w-5 mr-1" /> Quick Add
            </Button>
         </div>
       </div>
 
-      <CardContent className="p-6 space-y-6">
-        <div className="space-y-1.5">
-          <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] leading-none mb-2">{product.category || 'General'}</p>
-          <h3 className="font-black text-lg truncate group-hover:text-primary transition-colors leading-tight">{product.product_name}</h3>
+      <CardContent className="p-5 flex flex-col flex-grow justify-between gap-4">
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] leading-none">{product.category || 'General'}</p>
+            <h3 className="font-black text-base truncate group-hover:text-primary transition-colors leading-tight">{product.product_name}</h3>
+          </div>
+
+          {/* Variations Chips */}
+          {variations.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {variations.map((v: any) => (
+                <button
+                  key={v.label}
+                  onClick={() => setSelectedVarLabel(v.label)}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
+                    selectedVarLabel === v.label 
+                      ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' 
+                      : 'bg-secondary/50 text-muted-foreground border-transparent hover:border-primary/30'
+                  }`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between pt-2">
           <div className="space-y-0.5">
-            <div className="flex items-end gap-1.5">
-              <span className="text-3xl font-black text-foreground tracking-tighter">₹{product.price}</span>
-            </div>
+             <span className="text-2xl font-black text-foreground tracking-tighter">₹{currentPrice}</span>
+             {selectedVarLabel && variations.length > 1 && (
+               <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tight">Per {selectedVarLabel}</p>
+             )}
           </div>
           
           <Button 
-            onClick={() => onAdd({ ...product, display_name: product.product_name })}
+            onClick={handleAdd}
             disabled={product.quantity === 0}
             size="icon"
-            className="h-14 w-14 rounded-3xl shadow-2xl shadow-primary/20 hover:rotate-90 transition-all duration-500 ring-2 ring-primary/20 ring-offset-4 ring-offset-card"
+            className="h-12 w-12 rounded-2xl shadow-xl shadow-primary/10 hover:rotate-90 transition-all duration-500 ring-2 ring-primary/5 ring-offset-2 ring-offset-card"
           >
-            <Plus className="h-7 w-7 stroke-[3]" />
+            <Plus className="h-6 w-6 stroke-[3]" />
           </Button>
         </div>
       </CardContent>
