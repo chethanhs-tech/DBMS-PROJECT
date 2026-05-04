@@ -7,16 +7,16 @@ type Product = Tables<'products'>;
 export interface CartItem {
   product: Product & { 
     display_name?: string;
-    selected_variation?: string;
+    variant_id?: string | null;
   };
   quantity: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product & { display_name?: string }, qty?: number) => void;
-  removeFromCart: (productId: string, displayName?: string) => void;
-  updateQuantity: (productId: string, qty: number, displayName?: string) => void;
+  addToCart: (product: Product & { display_name?: string, variant_id?: string | null }, qty?: number) => void;
+  removeFromCart: (productId: string, variantId?: string | null) => void;
+  updateQuantity: (productId: string, qty: number, variantId?: string | null) => void;
   clearCart: () => void;
   applyCoupon: (code: string) => void;
   removeCoupon: () => void;
@@ -39,7 +39,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [discount, setDiscount] = useState(0);
 
-  const getItemKey = (p: Product & { display_name?: string }) => `${p.id}-${p.display_name || ''}`;
+  const getItemKey = (p: Product & { variant_id?: string | null }) => `${p.id}-${p.variant_id || 'base'}`;
 
   const totalPrice = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
 
@@ -68,7 +68,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     toast.info('Coupon removed');
   }, []);
 
-  const addToCart = useCallback((product: Product & { display_name?: string }, qty = 1) => {
+  const addToCart = useCallback((product: Product & { display_name?: string, variant_id?: string | null }, qty = 1) => {
     setItems(prev => {
       const key = getItemKey(product);
       const existing = prev.find(i => getItemKey(i.product) === key);
@@ -81,13 +81,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     toast.success(`${product.display_name || product.product_name} added to cart`);
   }, []);
 
-  const removeFromCart = useCallback((productId: string, displayName?: string) => {
-    const key = `${productId}-${displayName || ''}`;
+  const removeFromCart = useCallback((productId: string, variantId: string | null = null) => {
+    const key = `${productId}-${variantId || 'base'}`;
     setItems(prev => prev.filter(i => getItemKey(i.product) !== key));
   }, []);
 
-  const updateQuantity = useCallback((productId: string, qty: number, displayName?: string) => {
-    const key = `${productId}-${displayName || ''}`;
+  const updateQuantity = useCallback((productId: string, qty: number, variantId: string | null = null) => {
+    const key = `${productId}-${variantId || 'base'}`;
     if (qty <= 0) {
       setItems(prev => prev.filter(i => getItemKey(i.product) !== key));
       return;

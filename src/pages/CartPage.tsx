@@ -107,6 +107,7 @@ export default function CartPage() {
         };
 
         // Optional columns 
+        if (item.product.variant_id) orderPayload.variant_id = item.product.variant_id;
         if (upiId) orderPayload.upi_id = upiId;
         if (selectedAddressId) orderPayload.address_id = selectedAddressId;
         if (deliveryTime) orderPayload.estimated_delivery_time = deliveryTime;

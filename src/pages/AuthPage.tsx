@@ -52,6 +52,10 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const { resetPasswordForEmail } = useAuth();
 
   const config = ROLE_CONFIG[selectedRole];
 
@@ -59,14 +63,45 @@ export default function AuthPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
+    const handleAuthError = (err: string) => {
+      if (err.includes('Failed to fetch')) {
+        setError('❌ Backend Unreachable: Cannot connect to Supabase. Please ensure your VITE_SUPABASE_URL in .env is correct and active.');
+      } else {
+        setError(err);
+      }
+    };
+
     if (isLogin) {
       const result = await signIn(email, password);
-      if (result.error) setError(result.error);
+      if (result.error) handleAuthError(result.error);
     } else {
       const result = await signUp(email, password, name, 'customer');
-      if (result.error) setError(result.error);
+      if (result.error) {
+        handleAuthError(result.error);
+      } else {
+        // Show email verification notice
+        setVerificationSent(true);
+      }
     }
     setLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email to reset password');
+      return;
+    }
+    setError('');
+    setResetLoading(true);
+    const { error } = await resetPasswordForEmail(email);
+    if (error) {
+      setError(error);
+    } else {
+      setResetSent(true);
+      setTimeout(() => setResetSent(false), 5000);
+    }
+    setResetLoading(false);
   };
 
   const handleRoleSelect = (role: RoleTab) => {
@@ -75,6 +110,7 @@ export default function AuthPage() {
     setEmail('');
     setPassword('');
     setIsLogin(true); // Always default to login mode when switching tabs
+    setVerificationSent(false); // Reset verification state
   };
 
   return (
@@ -140,7 +176,26 @@ export default function AuthPage() {
           </CardHeader>
           <CardContent className="space-y-5 pb-6">
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {verificationSent ? (
+              <div className="py-8 text-center space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                <div className="h-16 w-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <Check className="h-8 w-8 text-green-500" />
+                </div>
+                <h3 className="text-xl font-black text-foreground">Registration Successful!</h3>
+                <p className="text-sm text-muted-foreground font-medium max-w-xs mx-auto">
+                  We've sent a verification link to <span className="text-foreground font-bold">{email}</span>. 
+                  Please check your inbox (and spam folder) to verify your account before logging in.
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4 font-bold" 
+                  onClick={() => { setVerificationSent(false); setIsLogin(true); setEmail(''); setPassword(''); }}
+                >
+                  Return to Sign In
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="name" className="font-bold text-xs">Full Name</Label>
@@ -157,9 +212,11 @@ export default function AuthPage() {
                   {isLogin && (
                     <button 
                       type="button" 
-                      onClick={() => alert('Password reset link sent to your email!')} 
-                      className="text-[10px] font-bold text-primary hover:underline"
+                      onClick={handleForgotPassword}
+                      disabled={resetLoading}
+                      className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
                     >
+                      {resetLoading && <Loader2 className="h-2 w-2 animate-spin" />}
                       Forgot password?
                     </button>
                   )}
@@ -182,17 +239,42 @@ export default function AuthPage() {
               </div>
 
               {error && (
-                <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+                <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 animate-in fade-in slide-in-from-top-1">
                   <p className="text-sm text-destructive font-medium">{error}</p>
+                </div>
+              )}
+
+              {resetSent && (
+                <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 animate-in fade-in slide-in-from-top-1">
+                  <p className="text-sm text-green-600 font-bold flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" /> Reset link sent! Check your inbox.
+                  </p>
                 </div>
               )}
               <Button type="submit" className={`w-full h-11 font-black rounded-xl shadow-lg bg-gradient-to-r ${config.color} hover:opacity-90 transition-opacity gap-2`} disabled={loading}>
                 {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Please wait...</> : <>{isLogin ? 'Sign In' : 'Sign Up'} <ArrowRight className="h-4 w-4" /></>}
               </Button>
             </form>
+            )}
+
+            {/* Default Credentials Display for Admin/Staff */}
+            {(!config.canSignUp && isLogin && !verificationSent) && (
+              <div className="mt-6 p-4 rounded-xl bg-secondary/50 border border-border/50 space-y-2">
+                <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground flex items-center gap-1">
+                  <Lock className="h-3 w-3" /> Default {config.label} Credentials
+                </p>
+                <div className="text-xs font-mono bg-background p-2 rounded border border-border/50 text-foreground flex justify-between items-center group cursor-pointer" onClick={() => {setEmail(selectedRole === 'admin' ? 'admin@grozosphere.com' : 'staff@grozosphere.com'); setPassword(selectedRole === 'admin' ? 'Admin@123' : 'Staff@123');}}>
+                  <div>
+                    <span className="text-muted-foreground">Email:</span> {selectedRole === 'admin' ? 'admin@grozosphere.com' : 'staff@grozosphere.com'}<br/>
+                    <span className="text-muted-foreground">Pass:</span> {selectedRole === 'admin' ? 'Admin@123' : 'Staff@123'}
+                  </div>
+                  <Badge variant="secondary" className="opacity-0 group-hover:opacity-100 transition-opacity">Auto-fill</Badge>
+                </div>
+              </div>
+            )}
 
             {/* Customer: Sign Up toggle */}
-            {config.canSignUp && (
+            {(config.canSignUp && !verificationSent) && (
               <div className="text-center text-sm text-muted-foreground pt-2">
                 {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
                 <button onClick={() => { setIsLogin(!isLogin); setError(''); }} className="text-primary font-bold hover:underline transition-colors">
@@ -201,8 +283,8 @@ export default function AuthPage() {
               </div>
             )}
             
-            {!config.canSignUp && (
-              <p className="text-[10px] text-center text-muted-foreground">
+            {(!config.canSignUp && !verificationSent) && (
+              <p className="text-[10px] text-center text-muted-foreground mt-4">
                 Notice: Staff/Admin accounts cannot be self-created.
               </p>
             )}

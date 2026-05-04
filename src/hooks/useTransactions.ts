@@ -54,14 +54,14 @@ export function useTransactions() {
     }
 
     // Get current product
-    const { data: product } = await supabase
+    const { data: product, error: fetchError } = await supabase
       .from('products')
       .select('quantity, product_name')
       .eq('id', productId)
       .single();
 
-    if (!product) {
-      toast.error('Product not found');
+    if (fetchError || !product) {
+      toast.error(fetchError?.message || 'Product not found');
       return false;
     }
 

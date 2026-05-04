@@ -22,6 +22,8 @@ import AlertsPage from "@/pages/AlertsPage";
 import ProfilePage from "@/pages/ProfilePage";
 import AdminUsersPage from "@/pages/AdminUsersPage";
 import NotFound from "./pages/NotFound.tsx";
+import SystemInitializer from "@/components/SystemInitializer";
+import SeedCatalogPage from "./pages/SeedCatalogPage";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +101,7 @@ function AuthRoute() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <SystemInitializer />
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -125,7 +128,16 @@ const App = () => (
               {/* Admin only */}
               <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><AdminUsersPage /></ProtectedRoute>} />
 
-              <Route path="*" element={<NotFound />} />
+          <Route
+            path="/admin/seed-catalog"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'staff']}>
+                <SeedCatalogPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<NotFound />} />
             </Routes>
           </CartProvider>
         </AuthProvider>

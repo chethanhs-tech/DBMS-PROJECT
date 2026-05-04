@@ -17,6 +17,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: string | null }>;
   deleteAccount: () => Promise<{ error: string | null }>;
 }
 
@@ -106,8 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) return { error: error.message };
 
-    // After successful signup, wait for the trigger to create the profile, then ensure the role is correct
-    if (data.user) {
+    // If email confirmation is required, data.session will be null.
+    // The postgres trigger handles initial profile creation securely.
+    // We only force-update roles if they are logged in immediately.
+    if (data.user && data.session) {
       await new Promise(resolve => setTimeout(resolve, 1500)); // Wait for trigger to create profile
 
       await supabase
@@ -147,6 +150,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   };
 
+  const resetPasswordForEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    return { error: error?.message ?? null };
+  };
+
   const deleteAccount = async () => {
     if (!user) return { error: 'No user logged in' };
     
@@ -161,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{ 
       user, profile, isAdmin, isStaff, isCustomer, loading, 
-      signUp, signIn, signOut, updatePassword, deleteAccount 
+      signUp, signIn, signOut, updatePassword, resetPasswordForEmail, deleteAccount 
     }}>
       {children}
     </AuthContext.Provider>

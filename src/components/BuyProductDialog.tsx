@@ -17,6 +17,7 @@ interface Product {
   image_url: string | null;
   category: string | null;
   sku: string;
+  product_variants?: any[];
 }
 
 interface BuyProductDialogProps {
@@ -33,17 +34,32 @@ const GST_RATE = 0.18;
 export default function BuyProductDialog({ product, open, onOpenChange }: BuyProductDialogProps) {
   const { user } = useAuth();
   const [qty, setQty] = useState(1);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('upi');
   const [step, setStep] = useState<Step>('details');
 
+  // Sync variant selection when product changes
+  useState(() => {
+    if (product?.product_variants?.length) {
+      setSelectedVariantId(product.product_variants[0].id);
+    }
+  });
+
   if (!product) return null;
 
-  const subtotal = product.price * qty;
+  const variants = product.product_variants || [];
+  const selectedVariant = variants.find(v => v.id === selectedVariantId);
+  
+  const currentPrice = selectedVariant ? selectedVariant.price : product.price;
+  const currentStock = selectedVariant ? selectedVariant.quantity : product.quantity;
+  const currentLabel = selectedVariant ? selectedVariant.label : null;
+
+  const subtotal = currentPrice * qty;
   const gst = subtotal * GST_RATE;
   const total = subtotal + gst;
 
   const handlePay = async () => {
-    if (qty > product.quantity) {
+    if (qty > currentStock) {
       toast.error('Not enough stock available');
       return;
     }
@@ -53,21 +69,20 @@ export default function BuyProductDialog({ product, open, onOpenChange }: BuyPro
     }
 
     setStep('processing');
-
-    // Simulate payment processing
     await new Promise(r => setTimeout(r, 2000));
 
     const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
 
     try {
-      // Create order
+      // Create order with variant_id
       const { error: orderError } = await supabase.from('orders').insert({
         user_id: user.id,
         product_id: product.id,
-        product_name: product.product_name,
+        variant_id: selectedVariantId,
+        product_name: currentLabel ? `${product.product_name} (${currentLabel})` : product.product_name,
         quantity: qty,
-        unit_price: product.price,
-        total_price: total,
+        unit_price: currentPrice,
+        total_amount: total,
         gst_amount: gst,
         payment_method: paymentMethod,
         status: 'completed',
@@ -76,23 +91,8 @@ export default function BuyProductDialog({ product, open, onOpenChange }: BuyPro
 
       if (orderError) throw orderError;
 
-      // Create sale transaction
-      const { error: txError } = await supabase.from('transactions').insert({
-        product_id: product.id,
-        type: 'sale',
-        quantity: qty,
-        user_id: user.id,
-      });
-
-      if (txError) throw txError;
-
-      // Reduce stock
-      const { error: stockError } = await supabase
-        .from('products')
-        .update({ quantity: product.quantity - qty })
-        .eq('id', product.id);
-
-      if (stockError) throw stockError;
+      // Note: Backend Postgres triggers (sync_order_to_transaction & update_stock_on_transaction)
+      // will now automatically handle transaction logging and stock deduction!
 
       setStep('success');
     } catch (err: any) {
@@ -138,18 +138,41 @@ export default function BuyProductDialog({ product, open, onOpenChange }: BuyPro
                     <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{product.sku}</code>
                     {product.category && <Badge variant="secondary" className="text-xs">{product.category}</Badge>}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">Available: {product.quantity} units</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Total Base Stock: {product.quantity}
+                  </p>
                 </div>
               </div>
 
+              {variants.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Quantity / Option</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {variants.map((v: any) => (
+                      <button
+                        key={v.id}
+                        onClick={() => { setSelectedVariantId(v.id); setQty(1); }}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                          selectedVariantId === v.id 
+                            ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105' 
+                            : 'bg-card text-muted-foreground border-border hover:border-primary/30'
+                        }`}
+                      >
+                        {v.label} - ₹{v.price} ({v.quantity} left)
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label>Quantity</Label>
+                <Label>Order Quantity</Label>
                 <Input
                   type="number"
                   min={1}
-                  max={product.quantity}
+                  max={currentStock}
                   value={qty}
-                  onChange={e => setQty(Math.max(1, Math.min(product.quantity, parseInt(e.target.value) || 1)))}
+                  onChange={e => setQty(Math.max(1, Math.min(currentStock || 1, parseInt(e.target.value) || 1)))}
                 />
               </div>
 

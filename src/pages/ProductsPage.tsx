@@ -340,7 +340,20 @@ export default function ProductsPage() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">{p.product_name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>
+                        {p.product_name}
+                        {p.product_variants?.length > 0 && (
+                          <div className="flex gap-1 mt-1">
+                            {p.product_variants.map((v: any) => (
+                              <Badge key={v.id} variant="outline" className="text-[8px] px-1.5 h-4 font-normal bg-primary/5 text-primary border-primary/20">
+                                {v.label}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell><code className="text-xs bg-muted px-1.5 py-0.5 rounded text-muted-foreground">{p.sku}</code></TableCell>
                     <TableCell>
                       {p.category ? (

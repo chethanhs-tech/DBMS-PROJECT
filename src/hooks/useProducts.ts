@@ -3,21 +3,28 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
-type Product = Tables<'products'>;
+export type ProductVariant = Tables<'product_variants'>;
+export type ProductWithVariants = Tables<'products'> & {
+  product_variants: ProductVariant[];
+};
 
 export function useProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithVariants[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchProducts = useCallback(async () => {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select('*, product_variants(*), categories(name)')
       .order('created_at', { ascending: false });
     if (error) {
       toast.error('Failed to load products');
     } else {
-      setProducts(data ?? []);
+      const mappedData = data?.map((p: any) => ({
+        ...p,
+        category: p.categories?.name || 'Uncategorized'
+      }));
+      setProducts((mappedData as any) ?? []);
     }
     setLoading(false);
   }, []);

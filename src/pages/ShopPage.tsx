@@ -220,35 +220,28 @@ export default function ShopPage() {
 }
 
 function ProductCard({ product, onAdd }: { product: any, onAdd: any }) {
-  const variations = useMemo(() => {
-    if (!product.variations) return [];
-    try {
-      return typeof product.variations === 'string' 
-        ? JSON.parse(product.variations) 
-        : product.variations;
-    } catch {
-      return [];
-    }
-  }, [product.variations]);
+  const variants = product.product_variants || [];
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(variants[0]?.id || null);
 
-  const [selectedVarLabel, setSelectedVarLabel] = useState(variations[0]?.label || null);
+  const selectedVariant = useMemo(() => {
+    return variants.find((v: any) => v.id === selectedVariantId) || null;
+  }, [selectedVariantId, variants]);
 
-  const currentPrice = useMemo(() => {
-    if (!selectedVarLabel) return product.price;
-    const v = variations.find((v: any) => v.label === selectedVarLabel);
-    return v ? v.price : product.price;
-  }, [selectedVarLabel, variations, product.price]);
+  const currentPrice = selectedVariant ? selectedVariant.price : product.price;
+  const currentStock = selectedVariant ? selectedVariant.quantity : product.quantity;
+  const currentLabel = selectedVariant ? selectedVariant.label : null;
 
   const handleAdd = () => {
-    const displayName = selectedVarLabel 
-      ? `${product.product_name} (${selectedVarLabel})`
+    const displayName = currentLabel 
+      ? `${product.product_name} (${currentLabel})`
       : product.product_name;
     
     onAdd({ 
       ...product, 
       price: currentPrice,
+      quantity: currentStock, // Pass the specific stock to CartContext for validation
       display_name: displayName,
-      selected_variation: selectedVarLabel
+      variant_id: selectedVariantId
     });
   };
 
@@ -274,7 +267,7 @@ function ProductCard({ product, onAdd }: { product: any, onAdd: any }) {
           )}
         </div>
 
-        {product.quantity === 0 && (
+        {currentStock === 0 && (
           <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center z-10">
             <div className="bg-destructive/10 text-destructive border-2 border-destructive px-6 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl rotate-12">
                Out of Stock
@@ -298,14 +291,14 @@ function ProductCard({ product, onAdd }: { product: any, onAdd: any }) {
           </div>
 
           {/* Variations Chips */}
-          {variations.length > 0 && (
+          {variants.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
-              {variations.map((v: any) => (
+              {variants.map((v: any) => (
                 <button
-                  key={v.label}
-                  onClick={() => setSelectedVarLabel(v.label)}
+                  key={v.id}
+                  onClick={() => setSelectedVariantId(v.id)}
                   className={`px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all border ${
-                    selectedVarLabel === v.label 
+                    selectedVariantId === v.id 
                       ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' 
                       : 'bg-secondary/50 text-muted-foreground border-transparent hover:border-primary/30'
                   }`}
@@ -320,14 +313,14 @@ function ProductCard({ product, onAdd }: { product: any, onAdd: any }) {
         <div className="flex items-center justify-between pt-2">
           <div className="space-y-0.5">
              <span className="text-2xl font-black text-foreground tracking-tighter">₹{currentPrice}</span>
-             {selectedVarLabel && variations.length > 1 && (
-               <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tight">Per {selectedVarLabel}</p>
+             {currentLabel && variants.length > 1 && (
+               <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tight">Per {currentLabel}</p>
              )}
           </div>
           
           <Button 
             onClick={handleAdd}
-            disabled={product.quantity === 0}
+            disabled={currentStock === 0}
             size="icon"
             className="h-12 w-12 rounded-2xl shadow-xl shadow-primary/10 hover:rotate-90 transition-all duration-500 ring-2 ring-primary/5 ring-offset-2 ring-offset-card"
           >

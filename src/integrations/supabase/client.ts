@@ -8,10 +8,28 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+  const newInit = { ...init, signal: controller.signal };
+  
+  return fetch(input, newInit)
+    .catch((err) => {
+      if (err.name === 'AbortError') {
+        throw new Error('Failed to fetch: Connection timed out after 5 seconds');
+      }
+      throw err;
+    })
+    .finally(() => clearTimeout(id));
+};
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: window.sessionStorage,
     persistSession: true,
     autoRefreshToken: true,
+  },
+  global: {
+    fetch: customFetch,
   }
 });
