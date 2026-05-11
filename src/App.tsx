@@ -24,6 +24,9 @@ import AdminUsersPage from "@/pages/AdminUsersPage";
 import NotFound from "./pages/NotFound.tsx";
 import SystemInitializer from "@/components/SystemInitializer";
 import SeedCatalogPage from "./pages/SeedCatalogPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import AuthCallback from "@/pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -110,6 +113,9 @@ const App = () => (
             <Routes>
               {/* Public */}
               <Route path="/auth" element={<AuthRoute />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
 
               {/* Everyone (all authenticated users) */}
               <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

@@ -249,13 +249,20 @@ function ProductCard({ product, onAdd }: { product: any, onAdd: any }) {
     <Card className="group relative bg-card border-border/50 hover:border-primary/20 shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 rounded-[2.5rem] overflow-hidden flex flex-col h-full">
       <div className="aspect-square bg-muted/20 relative overflow-hidden flex-shrink-0">
         <img 
-          src={product.image_url || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80'} 
+          src={product.image_url || ''} 
           alt={product.product_name} 
+          loading="lazy"
           className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80';
+            const target = e.target as HTMLImageElement;
+            // Hide the broken image and show a gradient placeholder
+            target.style.display = 'none';
           }}
         />
+        {/* Gradient fallback shown when image fails */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center pointer-events-none">
+          <span className="text-4xl opacity-30">🛒</span>
+        </div>
         
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">

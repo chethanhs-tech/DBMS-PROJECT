@@ -24,7 +24,7 @@ import {
 import ThemeToggle from '@/components/ThemeToggle';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { profile, isAdmin, isStaff, isCustomer, signOut } = useAuth();
+  const { profile, isAdmin, isStaff, isManager, isCustomer, signOut } = useAuth();
   const { totalItems } = useCart();
   const { addresses } = useAddresses();
   const location = useLocation();
@@ -37,9 +37,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // Role badge config
   const roleBadge = useMemo(() => {
     if (isAdmin) return { label: 'Admin', color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' };
-    if (isStaff) return { label: 'Staff', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' };
+    if (isManager) return { label: 'Manager', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' };
+    if (isStaff) return { label: 'Staff', color: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' };
     return { label: 'Customer', color: 'bg-green-500/10 text-green-600 border-green-500/20' };
-  }, [isAdmin, isStaff]);
+  }, [isAdmin, isStaff, isManager]);
 
   // Build nav items based on role
   const navItems = useMemo(() => {
@@ -88,7 +89,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <div>
               <h1 className="text-xl font-black tracking-tighter leading-none">GrozoSphere</h1>
               <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">
-                {isAdmin ? 'Admin Panel' : isStaff ? 'Staff Portal' : 'Smart Inventory'}
+                {isAdmin ? 'Admin Panel' : isManager ? 'Manager Portal' : isStaff ? 'Staff Portal' : 'Smart Inventory'}
               </p>
             </div>
           </Link>
@@ -97,7 +98,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         {/* Role indicator */}
         <div className="px-6 pb-4">
           <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold ${roleBadge.color}`}>
-            {isAdmin ? <ShieldCheck className="h-3.5 w-3.5" /> : isStaff ? <UserCog className="h-3.5 w-3.5" /> : <ShoppingBag className="h-3.5 w-3.5" />}
+            {isAdmin ? <ShieldCheck className="h-3.5 w-3.5" /> : (isManager || isStaff) ? <UserCog className="h-3.5 w-3.5" /> : <ShoppingBag className="h-3.5 w-3.5" />}
             {roleBadge.label} Access
           </div>
         </div>

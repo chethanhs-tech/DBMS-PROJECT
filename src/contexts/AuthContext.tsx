@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import type { Tables } from '@/integrations/supabase/types';
@@ -11,6 +12,7 @@ interface AuthContextType {
   profile: Profile | null;
   isAdmin: boolean;
   isStaff: boolean;
+  isManager: boolean;
   isCustomer: boolean;
   loading: boolean;
   signUp: (email: string, password: string, name: string, role?: AppRole) => Promise<{ error: string | null }>;
@@ -28,8 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
+  const [isManager, setIsManager] = useState(false);
   const [isCustomer, setIsCustomer] = useState(false);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchProfile = async (userId: string) => {
     // 1. Fetch Profile Data
@@ -54,22 +58,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const roles = userRoles?.map(r => r.role) || [];
     
-    // Set boolean flags based on presence of roles in the database
-    const hasAdmin = roles.includes('admin');
-    const hasStaff = roles.includes('staff');
-    const hasCustomer = roles.includes('customer') || (!hasAdmin && !hasStaff);
+    // Set boolean flags based on profileData role OR user_roles
+    // Since user_roles table has RLS, it might return empty for non-admins.
+    // Therefore we rely primarily on profileData.role.
+    const effectiveRole = profileData?.role || 'customer';
+    
+    const hasAdmin = roles.includes('admin' as any) || effectiveRole === 'admin';
+    const hasStaff = roles.includes('staff' as any) || effectiveRole === 'staff';
+    const hasManager = roles.includes('manager' as any) || effectiveRole === 'manager' || profileData?.name?.toLowerCase().includes('manager');
+    const hasCustomer = roles.includes('customer' as any) || effectiveRole === 'customer' || (!hasAdmin && !hasStaff);
 
     setIsAdmin(hasAdmin);
     setIsStaff(hasStaff);
+    setIsManager(!!hasManager);
     setIsCustomer(hasCustomer);
     
-    console.log('Role detection synced with database:', { userId, roles, hasAdmin, hasStaff, hasCustomer });
+    console.log('Role detection synced with database:', { userId, effectiveRole, roles, hasAdmin, hasStaff, hasCustomer, hasManager });
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user ?? null);
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('Password recovery event detected, redirecting...');
+          navigate('/reset-password', { replace: true });
+          return;
+        }
         if (session?.user) {
           // Small delay to let the trigger create the profile first
           setTimeout(() => fetchProfile(session.user.id), 500);
@@ -77,13 +92,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
           setIsAdmin(false);
           setIsStaff(false);
+          setIsManager(false);
           setIsCustomer(false);
         }
         setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session initialization error:', error);
+        setLoading(false);
+        return;
+      }
+      
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
@@ -142,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setIsAdmin(false);
     setIsStaff(false);
+    setIsManager(false);
     setIsCustomer(false);
   };
 
@@ -151,10 +174,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPasswordForEmail = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth`,
-    });
-    return { error: error?.message ?? null };
+    try {
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      console.log('Attempting password reset for:', email, 'with redirect:', redirectUrl);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+      
+      if (error) {
+        console.error('Supabase resetPasswordForEmail error:', error);
+        return { error: error.message };
+      }
+      
+      return { error: null };
+    } catch (err: any) {
+      console.error('Unexpected error during password reset:', err);
+      return { error: err.message || 'An unexpected error occurred' };
+    }
   };
 
   const deleteAccount = async () => {
@@ -170,7 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ 
-      user, profile, isAdmin, isStaff, isCustomer, loading, 
+      user, profile, isAdmin, isStaff, isManager, isCustomer, loading, 
       signUp, signIn, signOut, updatePassword, resetPasswordForEmail, deleteAccount 
     }}>
       {children}

@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Store, ShieldCheck, UserCog, ShoppingBag, ArrowRight, Eye, EyeOff, Loader2, Lock, Sparkles, Copy, Check } from 'lucide-react';
+import { Store, ShieldCheck, UserCog, ShoppingBag, ArrowRight, Eye, EyeOff, Loader2, Lock, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 type RoleTab = 'customer' | 'staff' | 'admin';
 
@@ -52,10 +53,7 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
-  const [resetLoading, setResetLoading] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
-  const { resetPasswordForEmail } = useAuth();
 
   const config = ROLE_CONFIG[selectedRole];
 
@@ -65,8 +63,8 @@ export default function AuthPage() {
     setLoading(true);
     
     const handleAuthError = (err: string) => {
-      if (err.includes('Failed to fetch')) {
-        setError('❌ Backend Unreachable: Cannot connect to Supabase. Please ensure your VITE_SUPABASE_URL in .env is correct and active.');
+      if (err.includes('Failed to fetch') || err.includes('NetworkError') || err.includes('timed out')) {
+        setError('⏳ Connection is slow. Please check your internet and try again.');
       } else {
         setError(err);
       }
@@ -85,23 +83,6 @@ export default function AuthPage() {
       }
     }
     setLoading(false);
-  };
-
-  const handleForgotPassword = async () => {
-    if (!email) {
-      setError('Please enter your email to reset password');
-      return;
-    }
-    setError('');
-    setResetLoading(true);
-    const { error } = await resetPasswordForEmail(email);
-    if (error) {
-      setError(error);
-    } else {
-      setResetSent(true);
-      setTimeout(() => setResetSent(false), 5000);
-    }
-    setResetLoading(false);
   };
 
   const handleRoleSelect = (role: RoleTab) => {
@@ -210,15 +191,12 @@ export default function AuthPage() {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="font-bold text-xs">Password</Label>
                   {isLogin && (
-                    <button 
-                      type="button" 
-                      onClick={handleForgotPassword}
-                      disabled={resetLoading}
-                      className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
+                    <Link 
+                      to="/forgot-password"
+                      className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
                     >
-                      {resetLoading && <Loader2 className="h-2 w-2 animate-spin" />}
                       Forgot password?
-                    </button>
+                    </Link>
                   )}
                 </div>
                 <div className="relative">
@@ -244,13 +222,6 @@ export default function AuthPage() {
                 </div>
               )}
 
-              {resetSent && (
-                <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 animate-in fade-in slide-in-from-top-1">
-                  <p className="text-sm text-green-600 font-bold flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" /> Reset link sent! Check your inbox.
-                  </p>
-                </div>
-              )}
               <Button type="submit" className={`w-full h-11 font-black rounded-xl shadow-lg bg-gradient-to-r ${config.color} hover:opacity-90 transition-opacity gap-2`} disabled={loading}>
                 {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Please wait...</> : <>{isLogin ? 'Sign In' : 'Sign Up'} <ArrowRight className="h-4 w-4" /></>}
               </Button>

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Search, ArrowUpDown, Filter, Package, ShoppingCart, RotateCcw, Loader2, ImagePlus, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ArrowUpDown, Filter, Package, ShoppingCart, RotateCcw, Loader2, ImagePlus, X, Sparkles } from 'lucide-react';
 import BuyProductDialog from '@/components/BuyProductDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -80,12 +80,13 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...form, supplier_id: form.supplier_id || null };
+    const { category, ...restForm } = form; // Strip 'category' from payload since DB uses 'category_id'
+    const payload = { ...restForm, supplier_id: form.supplier_id || null };
     let success: boolean;
     if (editingProduct) {
       success = await updateProduct(editingProduct, payload);
     } else {
-      success = await addProduct(payload);
+      success = await addProduct(payload as any);
     }
     if (success) { setDialogOpen(false); resetForm(); }
   };
@@ -171,7 +172,58 @@ export default function ProductsPage() {
                   
                   {/* Image Upload Row */}
                   <div className="col-span-2 space-y-2">
-                    <Label>Product Image</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Product Image</Label>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[10px] font-bold gap-1 bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 hover:text-purple-700 border-purple-500/20"
+                        onClick={async () => {
+                          if (!form.product_name) {
+                            toast.error("Please enter a product name first");
+                            return;
+                          }
+                          setUploading(true);
+                          try {
+                            const prompt = `A highly realistic, professional studio photograph of a grocery product: ${form.product_name} ${form.category ? '(' + form.category + ')' : ''}. The product should be clearly visible in the center, isolated on a pure white background. Ultra-detailed, 4k resolution, photorealistic packaging.`;
+                            const seed = Math.floor(Math.random() * 100000);
+                            const aiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=800&nologo=true&seed=${seed}&model=flux`;
+                            
+                            // 1. Try to fetch from AI provider
+                            const response = await fetch(aiUrl);
+                            if (!response.ok) {
+                              throw new Error("AI provider rate limited or failed. Please try again in a few seconds.");
+                            }
+                            const blob = await response.blob();
+                            
+                            // 2. Upload to Supabase Storage
+                            const fileName = `auto-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+                            const { error: uploadError } = await supabase.storage
+                              .from(targetBucket)
+                              .upload(fileName, blob, { contentType: 'image/jpeg' });
+                              
+                            if (uploadError) throw uploadError;
+                            
+                            // 4. Get public URL
+                            const { data: { publicUrl } } = supabase.storage
+                              .from(targetBucket)
+                              .getPublicUrl(fileName);
+                            
+                            setForm(f => ({ ...f, image_url: publicUrl }));
+                            toast.success(`Image perfectly matched via AI Generator!`);
+                          } catch (err: any) {
+                            toast.error(err.message || "Failed to find or generate image.");
+                          } finally {
+                            setUploading(false);
+                          }
+                        }}
+                        disabled={uploading || !form.product_name}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        Auto-Generate AI
+                      </Button>
+                    </div>
                     <div className="flex items-center gap-4">
                       {form.image_url ? (
                         <div className="relative h-20 w-20 rounded-xl overflow-hidden border border-border shadow-sm group">
@@ -333,7 +385,7 @@ export default function ProductsPage() {
                   <TableRow key={p.id} className="group hover:bg-muted/30 transition-colors duration-150">
                     <TableCell className="w-12 pr-0">
                       {p.image_url ? (
-                        <img src={p.image_url} alt={p.product_name} className="h-9 w-9 rounded-lg object-cover border border-border/50" />
+                        <img src={p.image_url} alt={p.product_name} loading="lazy" className="h-9 w-9 rounded-lg object-cover border border-border/50" />
                       ) : (
                         <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center">
                           <Package className="h-4 w-4 text-muted-foreground" />

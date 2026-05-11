@@ -28,9 +28,9 @@ BEGIN
         raw_app_meta_data, raw_user_meta_data, created_at, updated_at, 
         confirmation_token, email_change, email_change_token_new, recovery_token
     ) VALUES
-    (admin_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@grozosphere.com', crypt('admin@123', gen_salt('bf')), now(), NULL, NULL, '{"provider": "email", "providers": ["email"]}', '{"name": "Admin User", "role": "admin"}', now(), now(), '', '', '', ''),
-    (staff_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'staff@grozosphere.com', crypt('staff@123', gen_salt('bf')), now(), NULL, NULL, '{"provider": "email", "providers": ["email"]}', '{"name": "Staff User", "role": "staff"}', now(), now(), '', '', '', ''),
-    (customer_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'customer@grozosphere.com', crypt('customer@123', gen_salt('bf')), now(), NULL, NULL, '{"provider": "email", "providers": ["email"]}', '{"name": "Demo Customer", "role": "customer"}', now(), now(), '', '', '', '');
+    (admin_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@grozosphere.com', crypt('Admin@123', gen_salt('bf')), now(), NULL, NULL, '{"provider": "email", "providers": ["email"]}', '{"name": "Admin User", "role": "admin"}', now(), now(), '', '', '', ''),
+    (staff_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'staff@grozosphere.com', crypt('Staff@123', gen_salt('bf')), now(), NULL, NULL, '{"provider": "email", "providers": ["email"]}', '{"name": "Staff User", "role": "staff"}', now(), now(), '', '', '', ''),
+    (customer_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'customer@grozosphere.com', crypt('Customer@123', gen_salt('bf')), now(), NULL, NULL, '{"provider": "email", "providers": ["email"]}', '{"name": "Demo Customer", "role": "customer"}', now(), now(), '', '', '', '');
 
     -- 4. INSERT IDENTITIES (Required for login)
     INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at) VALUES
