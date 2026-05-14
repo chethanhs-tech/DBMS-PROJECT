@@ -22,37 +22,33 @@ export default function ResetPasswordPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have a valid session to reset password
+    let isMounted = true;
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const isRecoveryHash = hashParams.get('type') === 'recovery';
+
     const checkSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       
-      if (error || !session) {
-        // If we don't have a session, we might still be processing the hash in the URL
-        // Supabase client automatically picks up the hash and creates a session
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const type = hashParams.get('type');
-        
-        if (!accessToken && type !== 'recovery') {
-          // No session and no recovery hash
-          setError('Invalid or expired password reset link.');
-        }
+      if (!isMounted) return;
+
+      if (!session && !isRecoveryHash) {
+        setError('Invalid or expired password reset link. Please try again.');
       }
       setValidating(false);
     };
     
     checkSession();
     
-    // Listen for auth state changes (supabase will fire this when it parses the hash)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
+      if (!isMounted) return;
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setValidating(false);
-      } else if (event === 'SIGNED_IN' && session) {
-        setValidating(false);
+        setError('');
       }
     });
 
     return () => {
+      isMounted = false;
       authListener.subscription.unsubscribe();
     };
   }, []);

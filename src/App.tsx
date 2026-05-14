@@ -101,7 +101,16 @@ function AuthRoute() {
   return <AuthPage />;
 }
 
-const App = () => (
+const App = () => {
+  // Catch Supabase password recovery hash before React Router or ProtectedRoute redirects destroy it
+  if (typeof window !== 'undefined') {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    if (hashParams.get('type') === 'recovery' && window.location.pathname !== '/reset-password') {
+      window.location.href = '/reset-password' + window.location.hash;
+    }
+  }
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <SystemInitializer />
@@ -150,6 +159,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
