@@ -72,7 +72,7 @@ export default function CartPage() {
   const handleCheckout = async () => {
     if (!user || items.length === 0) return;
     
-    if (paymentMethod === 'upi_id' && !upiId.includes('@')) {
+    if (paymentMethod === 'upi_id' && (!upiId || upiId.length < 3)) {
       toast.error("Please enter a valid UPI ID");
       return;
     }
@@ -263,15 +263,15 @@ export default function CartPage() {
                       </div>
                       <div className="flex flex-col items-end gap-3">
                         <div className="flex items-center gap-1 bg-secondary/80 p-1 rounded-2xl border border-border/30 shadow-sm">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-card" onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.product.display_name)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-card" onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.product.variant_id)}>
                             <Minus className="h-3 w-3" />
                           </Button>
                           <span className="w-10 text-center font-black text-sm">{item.quantity}</span>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-card" onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.product.display_name)} disabled={item.quantity >= item.product.quantity}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-card" onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.product.variant_id)} disabled={item.quantity >= item.product.quantity}>
                             <Plus className="h-3 w-3" />
                           </Button>
                         </div>
-                        <button className="text-destructive/60 hover:text-destructive font-black text-[10px] uppercase tracking-widest transition-colors mr-2" onClick={() => removeFromCart(item.product.id, item.product.display_name)}>
+                        <button className="text-destructive/60 hover:text-destructive font-black text-[10px] uppercase tracking-widest transition-colors mr-2" onClick={() => removeFromCart(item.product.id, item.product.variant_id)}>
                           Remove
                         </button>
                       </div>
