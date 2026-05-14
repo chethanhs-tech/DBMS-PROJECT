@@ -128,57 +128,97 @@ export default function CartPage() {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Receipt ${invoiceNumber}</title>
+  <title>Invoice ${invoiceNumber}</title>
   <style>
-    body { font-family: 'Courier New', Courier, monospace; background: #f8f9fa; color: #111; padding: 40px; display: flex; justify-content: center; }
-    .receipt { background: #fff; padding: 30px; width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 4px solid #10b981; }
-    .header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #ccc; padding-bottom: 20px; }
-    .header h1 { margin: 0; color: #10b981; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
-    .header p { margin: 5px 0; font-size: 14px; color: #666; }
-    .item-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
-    .item-name { flex: 1; padding-right: 15px; }
-    .divider { border-bottom: 1px dashed #ccc; margin: 15px 0; }
-    .total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; margin-top: 20px; }
-    .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #888; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { padding: 40px; color: #1a1a1a; background: #fff; }
+    .invoice { max-width: 600px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #e5e7eb; }
+    .brand { font-size: 24px; font-weight: 700; color: #22c55e; }
+    .brand-sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .invoice-meta { text-align: right; font-size: 13px; }
+    .invoice-meta strong { display: block; font-size: 16px; margin-bottom: 4px; }
+    .section { margin-bottom: 24px; }
+    .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 8px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px 12px; background: #f3f4f6; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
+    td { padding: 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+    .amount-col { text-align: right; }
+    .totals { margin-top: 16px; }
+    .total-row { display: flex; justify-content: space-between; padding: 6px 12px; font-size: 14px; }
+    .total-row.final { font-size: 18px; font-weight: 700; color: #22c55e; border-top: 2px solid #e5e7eb; padding-top: 12px; margin-top: 8px; }
+    .footer { margin-top: 40px; padding-top: 24px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 12px; color: #9ca3af; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #dcfce7; color: #16a34a; }
   </style>
 </head>
 <body>
-  <div class="receipt">
+  <div class="invoice">
     <div class="header">
-      <h1>GrozoSphere</h1>
-      <p>Order Invoice: ${invoiceNumber}</p>
-      <p>Customer: ${user.email}</p>
-      <p>Date: ${new Date().toLocaleString()}</p>
+      <div>
+        <div class="brand">GrozoSphere</div>
+        <div class="brand-sub">Smart Groceries. Smarter Inventory.</div>
+      </div>
+      <div class="invoice-meta">
+        <strong>${invoiceNumber}</strong>
+        <div>${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+        <div style="margin-top:8px"><span class="badge">Paid</span></div>
+      </div>
     </div>
     
-    <div class="items">
-      ${items.map(i => `
-        <div class="item-row">
-          <span class="item-name">${i.quantity}x ${i.product.display_name || i.product.product_name}</span>
-          <span>₹${(i.product.price * i.quantity).toLocaleString('en-IN')}</span>
-        </div>
-      `).join('')}
+    <div class="section">
+      <div class="section-title">Order Details</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th class="amount-col">Unit Price</th>
+            <th class="amount-col">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(i => `
+            <tr>
+              <td>${i.product.display_name || i.product.product_name}</td>
+              <td>${i.quantity}</td>
+              <td class="amount-col">₹${i.product.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+              <td class="amount-col">₹${(i.product.price * i.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     </div>
 
-    <div class="divider"></div>
-    
-    <div class="item-row">
-      <span class="item-name">Subtotal</span>
-      <span>₹${totalPrice.toLocaleString('en-IN')}</span>
+    <div class="totals">
+      <div class="total-row">
+        <span>Subtotal</span>
+        <span>₹${totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+      </div>
+      <div class="total-row">
+        <span>GST (18%)</span>
+        <span>₹${gst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+      </div>
+      <div class="total-row final">
+        <span>Total</span>
+        <span>₹${grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+      </div>
     </div>
-    <div class="item-row">
-      <span class="item-name">GST (18%)</span>
-      <span>₹${gst.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
-    </div>
-    
-    <div class="total-row">
-      <span>GRAND TOTAL</span>
-      <span>₹${grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+
+    <div class="section" style="margin-top:24px">
+      <div class="section-title">Payment Info</div>
+      <div class="total-row">
+        <span>Method</span>
+        <span style="text-transform:capitalize">${paymentMethod.replace('_', ' ')}</span>
+      </div>
+      <div class="total-row">
+        <span>Status</span>
+        <span class="badge">Completed</span>
+      </div>
     </div>
 
     <div class="footer">
-      <p>Thank you for shopping at GrozoSphere!</p>
-      <p>Delivering fresh to your door.</p>
+      <p>Thank you for shopping with GrozoSphere!</p>
+      <p style="margin-top:4px">Smart Groceries. Smarter Inventory.</p>
     </div>
   </div>
 </body>
