@@ -56,9 +56,14 @@ export default function AuthCallback() {
 
         // Only if there's no session after a short wait do we handle errors or fallback
         setTimeout(() => {
-          const errorDescription = params.get('error_description');
+          const errorDescription = params.get('error_description') || hashParams.get('error_description');
           if (errorDescription) {
-            setError(errorDescription);
+            // Make the error user-friendly if it's the common expired link error
+            if (errorDescription.includes('expired')) {
+              setError("This reset link has expired or was already used. Please request a new one.");
+            } else {
+              setError(decodeURIComponent(errorDescription.replace(/\+/g, ' ')));
+            }
           }
         }, 2000);
       }
