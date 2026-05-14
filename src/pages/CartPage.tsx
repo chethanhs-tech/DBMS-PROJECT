@@ -123,22 +123,72 @@ export default function CartPage() {
 
       // --- NEW: UPLOAD RECEIPT TO STORAGE ---
       try {
-        const receiptContent = JSON.stringify({
-          invoiceNumber,
-          customer: user.email,
-          items: items.map(i => ({ 
-            name: i.product.display_name || i.product.product_name, 
-            qty: i.quantity, 
-            price: i.product.price 
-          })),
-          total: grandTotal,
-          timestamp: new Date().toISOString()
-        }, null, 2);
+        const receiptHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Receipt ${invoiceNumber}</title>
+  <style>
+    body { font-family: 'Courier New', Courier, monospace; background: #f8f9fa; color: #111; padding: 40px; display: flex; justify-content: center; }
+    .receipt { background: #fff; padding: 30px; width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 4px solid #10b981; }
+    .header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #ccc; padding-bottom: 20px; }
+    .header h1 { margin: 0; color: #10b981; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+    .header p { margin: 5px 0; font-size: 14px; color: #666; }
+    .item-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+    .item-name { flex: 1; padding-right: 15px; }
+    .divider { border-bottom: 1px dashed #ccc; margin: 15px 0; }
+    .total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; margin-top: 20px; }
+    .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="receipt">
+    <div class="header">
+      <h1>GrozoSphere</h1>
+      <p>Order Invoice: ${invoiceNumber}</p>
+      <p>Customer: ${user.email}</p>
+      <p>Date: ${new Date().toLocaleString()}</p>
+    </div>
+    
+    <div class="items">
+      ${items.map(i => `
+        <div class="item-row">
+          <span class="item-name">${i.quantity}x ${i.product.display_name || i.product.product_name}</span>
+          <span>₹${(i.product.price * i.quantity).toLocaleString('en-IN')}</span>
+        </div>
+      `).join('')}
+    </div>
 
-        const fileName = `${invoiceNumber}.json`;
+    <div class="divider"></div>
+    
+    <div class="item-row">
+      <span class="item-name">Subtotal</span>
+      <span>₹${totalPrice.toLocaleString('en-IN')}</span>
+    </div>
+    <div class="item-row">
+      <span class="item-name">GST (18%)</span>
+      <span>₹${gst.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+    </div>
+    
+    <div class="total-row">
+      <span>GRAND TOTAL</span>
+      <span>₹${grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+    </div>
+
+    <div class="footer">
+      <p>Thank you for shopping at GrozoSphere!</p>
+      <p>Delivering fresh to your door.</p>
+    </div>
+  </div>
+</body>
+</html>
+        `;
+
+        const fileName = `${invoiceNumber}.html`;
         const { error: uploadError } = await supabase.storage
           .from('order-receipts')
-          .upload(fileName, new Blob([receiptContent], { type: 'application/json' }));
+          .upload(fileName, new Blob([receiptHTML], { type: 'text/html' }));
 
         if (uploadError) console.error("Receipt upload failed:", uploadError);
         else logSync(`Receipt archived successfully to order-receipts: ${fileName}`);
